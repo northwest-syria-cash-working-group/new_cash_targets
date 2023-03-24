@@ -1,6 +1,6 @@
 ---
-title: "Northwest Syria Cash Working Group Earthquake Response Bulletin"
-date:  "23 March 2023"
+title: "Northwest Syria Cash Working Group Proposed Revision to Targets"
+date:  "24 March 2023"
 output:
   html_document:
     code_download: yes
@@ -159,10 +159,8 @@ eq <- read_excel("./data/syria-earthquake-impact-05-march-2023.xlsx",
                  sheet = "DATASET") %>% 
   setNames(names_eq) %>% 
   left_join(locations %>% select(admin4pcode, admin3pcode), 
-            by = c("admin4" = "admin4pcode"))
-
-eq_score <- eq %>%
-      mutate(wounded_dead = casualties + injuries,
+            by = c("admin4" = "admin4pcode")) %>% 
+  mutate(wounded_dead = casualties + injuries,
              damaged_houses = completely_destroyed_houses + damaged_unihabitable_houses) %>% 
       group_by(admin3pcode) %>% 
       summarise(wounded_dead = sum(wounded_dead, na.rm = TRUE), 
@@ -173,7 +171,10 @@ eq_score <- eq %>%
               select(admin3pcode, total_population), 
             by = "admin3pcode") %>% 
   mutate(wounded_dead_100k = wounded_dead / total_population * 100000, 
-         damaged_houses_100k = damaged_houses / total_population * 100000) %>%
+         damaged_houses_100k = damaged_houses / total_population * 100000)
+
+
+eq_score <- eq %>%
   mutate_at(vars(wounded_dead, damaged_houses, 
                  wounded_dead_100k, damaged_houses_100k), ~ range_wna(.)) %>% 
   mdepriv(c("wounded_dead", "damaged_houses", 
@@ -200,6 +201,8 @@ needs_cash <- read_excel("./data/2023HNO_PiN_Severity_detailedAoI_FORSHARE 15032
 
 ```
 
+# Overall cash working group targets
+
 This document proposes new targets for 2023 for the Cash Working Group; targets have not been updated since the flash appeal on 12 February 2023. New assessment data has been made available since then, necessitating the change. 
 
 The proposed calculation for the new Cash Working Group target is the sum of **persons completely unable to meet their basic needs** (identified as 8% of the population in the HNO) and the number of **persons in immediate needs of shelter and NFI support** (which the Shelter Cluster has [estimated](https://sheltercluster.s3.eu-central-1.amazonaws.com/public/docs/EQ-SitRep-14Mar-vEN.pdf?VersionId=q2PaLZGoorIMaaLJVPtd7ca6HDmp0lpO) at 265,000 persons whose houses have been completely damaged and 224,231 persons whose houses have received major damage. 
@@ -225,7 +228,8 @@ needs_cash %>%
            as_paragraph("unable to meet needs + complete damage + major damage")) %>% 
   footnote(i = 5, j = 1, ref_symbols = "b", 
            as_paragraph("unable to meet needs + complete damage")) %>% 
-  italic(part = "footer")
+  italic(part = "footer") %>% 
+  bold(i = 4:5, j = 1:2, part = "body")
 
 ```
 
@@ -233,7 +237,9 @@ needs_cash %>%
 
 Target 1 is the combination of persons completely unable to meet their basic needs in addition to persons whose houses have been either majorly or completely damaged. Target 2 is the sum of persons unable to meet their basic needs and only the persons whose houses have been completely damaged. 
 
-<br>
+<br><br><br>
+
+# Preliminary sub-district-level allocation
 
 Furthermore, the Cash Working Group has also conducted a preliminary allocation of these new proposed targets at the sub-district (admin3) level. 
 
@@ -245,6 +251,143 @@ This preliminary allocation has been based on the combination of four variables,
 * The number of completely and partially-damaged houses per 100,000 persons 
 
 The [Betti-Verma formula](http://medim.ceps.lu/stata/mdepriv_v3.pdf) formula was applied to weight these variables. 
+
+A **sub-district-level breakdown** of these new proposed targets may be downloaded **[here](https://github.com/northwest-syria-cash-working-group/new_cash_targets/raw/main/data/proposed_targets_preliminary_allocation.xlsx)**.
+
+
+### Plots and visual proof
+
+This is a slightly technical section with more detail on the validity of the calculated earthquake scores. 
+
+```{r eval=FALSE}
+eq %>% 
+  summarise(wounded_dead = median(wounded_dead, na.rm = TRUE), 
+            wounded_dead_100k = median(wounded_dead_100k, na.rm = TRUE), 
+            damaged_houses = median(damaged_houses, na.rm = TRUE),
+            damaged_houses_100k = median(damaged_houses_100k, na.rm = TRUE))
+```
+
+The plots below show the magnitude and severity of the wounded and dead and damaged houses, respectively. Magnitude is shown on the x-axis and severity on the y-axis. 
+
+The calculated earthquake score, which roughly translates to each sub-district's share of the overall earthquake impact is marked by the size of each point. 
+
+As a rule of thumb, sub-districts which show up in both of the blue rectangles should be prioritised, seeing as they are above the median in magnitude and severity for both casualties and damaged houses. 
+
+<br>
+
+```{r fig.height=6, warning=FALSE}
+
+eq %>% 
+  left_join(locations %>% distinct(admin3pcode, sub_district = admin3name_en), 
+            by = "admin3pcode") %>% 
+  left_join(eq_score$data %>% select(admin3pcode, eq_score), 
+            by = "admin3pcode") %>% 
+  ggplot(aes(x = wounded_dead, y = wounded_dead_100k)) + 
+  geom_jitter(aes(size = eq_score)) + 
+  geom_text_repel(aes(label = sub_district),
+                   point.padding = .5, 
+                   segment.color = "grey50", size = 2) +
+  scale_size_continuous(range = c(0.5, 8)) +
+  scale_x_log10(labels = comma, breaks = c(0, 10, 30, 100, 300, 1000, 3000)) + 
+  scale_y_log10(labels = comma, breaks = c(0, 10, 30, 100, 300, 1000, 3000)) + 
+  labs(x = "Number of wounded and dead", 
+       y = "Wounded and dead per 100k persons") +
+  annotate("rect", xmin = 109.5,  xmax = Inf, ymin = 101.7189	, ymax = Inf,  
+           alpha = .1, fill = "blue") +
+  
+eq %>% 
+  left_join(locations %>% distinct(admin3pcode, sub_district = admin3name_en), 
+            by = "admin3pcode") %>% 
+  left_join(eq_score$data %>% select(admin3pcode, eq_score), 
+            by = "admin3pcode") %>% 
+  ggplot(aes(x = damaged_houses, y = damaged_houses_100k)) + 
+  geom_jitter(aes(size = eq_score)) + 
+  geom_text_repel(aes(label = sub_district),
+                   point.padding = .5, 
+                   segment.color = "grey50", size = 2) +
+  scale_size_continuous(range = c(0.5, 8)) +
+  scale_x_log10(labels = comma, breaks = c(0, 10, 30, 100, 300, 1000, 3000)) + 
+  scale_y_log10(labels = comma, breaks = c(0, 10, 30, 100, 300, 1000, 3000)) +
+  labs(x = "Number of damaged houses", 
+       y = "Damaged houses per 100k persons") +
+  annotate("rect", xmin = 125,  xmax = Inf, ymin = 187.0812	, ymax = Inf,  
+           alpha = .1, fill = "blue") +
+
+plot_annotation(title = "Magnitude and severity of earthquake impacts", 
+                  subtitle = "At sub-district level; above-median values within blue box") +
+  
+plot_layout(guides = "collect") & 
+  theme(legend.position = "bottom")  
+
+
+
+```
+
+<br>
+
+As a visual proof, the earthquake score (a calculated weighted average) is extremely-highly correlated with the magnitude and severity of both casualties and houses damaged (being derived from them anyway). It is statistically sound to use the earthquake score as a shorthand for overall earthquake impacts. 
+
+<br>
+
+
+```{r warning=FALSE}
+eq %>% 
+  left_join(locations %>% distinct(admin3pcode, sub_district = admin3name_en), 
+            by = "admin3pcode") %>% 
+  left_join(eq_score$data %>% select(admin3pcode, eq_score), 
+            by = "admin3pcode") %>% 
+  ggplot(aes(x = wounded_dead, y = eq_score)) +
+  geom_point() + 
+  geom_smooth(colour = "blue", size = .5, method = "lm") +
+  expand_limits(y = 0) +
+  scale_x_log10() + 
+  labs(y = "Earthquake score", 
+       x = "Wounded and dead persons") +
+
+eq %>% 
+  left_join(locations %>% distinct(admin3pcode, sub_district = admin3name_en), 
+            by = "admin3pcode") %>% 
+  left_join(eq_score$data %>% select(admin3pcode, eq_score), 
+            by = "admin3pcode") %>% 
+  ggplot(aes(x = wounded_dead_100k, y = eq_score)) +
+  geom_point() + 
+  geom_smooth(colour = "blue", size = .5, method = "lm") +
+  expand_limits(y = 0) +
+  scale_x_log10() + 
+  labs(y = "Earthquake score", 
+       x = "Wounded and dead per 100k persons") +
+
+eq %>% 
+  left_join(locations %>% distinct(admin3pcode, sub_district = admin3name_en), 
+            by = "admin3pcode") %>% 
+  left_join(eq_score$data %>% select(admin3pcode, eq_score), 
+            by = "admin3pcode") %>% 
+  ggplot(aes(x = damaged_houses, y = eq_score)) +
+  geom_point() + 
+  geom_smooth(colour = "blue", size = .5, method = "lm") +
+  expand_limits(y = 0) +
+  scale_x_log10() +
+  labs(y = "Earthquake score", 
+       x = "Damaged houses") +
+
+eq %>% 
+  left_join(locations %>% distinct(admin3pcode, sub_district = admin3name_en), 
+            by = "admin3pcode") %>% 
+  left_join(eq_score$data %>% select(admin3pcode, eq_score), 
+            by = "admin3pcode") %>% 
+  ggplot(aes(x = damaged_houses_100k, y = eq_score)) +
+  geom_point() + 
+  geom_smooth(colour = "blue", size = .5, method = "lm") +
+  expand_limits(y = 0) +
+  scale_x_log10() +
+  labs(y = "Earthquake score", 
+       x = "Damaged houses per 100k persons") +
+
+  plot_layout(ncol = 2) +
+  plot_annotation(title = "Earthquake score vs. casualties and damaged houses", 
+                  subtitle = "At sub-district level") 
+```
+
 
 
 
