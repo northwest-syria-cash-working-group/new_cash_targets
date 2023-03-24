@@ -1,0 +1,251 @@
+---
+title: "Northwest Syria Cash Working Group Earthquake Response Bulletin"
+date:  "23 March 2023"
+output:
+  html_document:
+    code_download: yes
+    theme: readable
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    number_sections: no
+    collapsed: no
+always_allow_html: yes
+---
+
+```{css, echo=FALSE}
+
+#TOC::before {
+  content: "";
+  display: block;
+  height: 70px;
+  margin: 2em 20px 40px 20px;
+  background-image: url("NWS-CWG logo.PNG");
+  background-size: contain;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+```
+
+```{=html}
+<style>
+    body .main-container {
+        max-width: 1280px;
+    }
+</style>
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.width=9, message = FALSE, warning=FALSE)
+library(tidyverse)
+library(readxl)
+library(lubridate)
+library(stringi)
+library(pander)
+library(janitor)
+library(scales)
+library(magrittr)
+library(viridis)
+library(patchwork)
+library(DT)
+library(sf)
+library(plotly)
+library(flextable)
+library(ggrepel)
+library(magrittr)
+library(mdepriv)
+library(writexl)
+
+theme_set(theme_light())
+
+# disabling scientific notation
+options(scipen = 100)
+
+# pander tables all in one row
+panderOptions('table.split.table', Inf)
+
+# pander thousands separator
+panderOptions("big.mark", ",")
+
+# replace 
+opts <- options(knitr.kable.NA = "")
+
+`%out%` <- Negate(`%in%`)
+
+# function for transposing df
+transpose_df <- function(df) {
+  t_df <- data.table::transpose(df)
+  colnames(t_df) <- rownames(df)
+  rownames(t_df) <- colnames(df)
+  t_df <- t_df %>%
+    tibble::rownames_to_column(.data = .) %>%
+    tibble::as_tibble(.)
+  return(t_df)
+}
+
+# function beneficiary summaries
+sum_ben <- function(df, column_var){
+  
+  column_var <- enquo(column_var)
+  
+  df %>%
+    group_by(!!column_var) %>% # must add bang-bang
+    summarise(beneficiaries = sum(new_beneficiaries, na.rm = TRUE)) %>% 
+    arrange(desc(beneficiaries))
+    
+}
+
+# function beneficiary summaries, 2 grouped variables
+sum_ben2 <- function(df, column_var1, column_var2){
+  
+  column_var1 <- enquo(column_var1)
+  column_var2 <- enquo(column_var2)
+  
+  df %>%
+    group_by(!!column_var1, !!column_var2) %>% # must add bang-bang
+    summarise(beneficiaries = sum(new_beneficiaries, na.rm = TRUE), .groups = "drop")
+    
+}
+
+# scaling functions 
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+range_wna <- function(x){(x-min(x, na.rm = TRUE))/(max(x, na.rm = TRUE)-min(x, na.rm = TRUE))}
+
+#mode function 
+mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+```
+
+
+```{r data}
+
+locations <- read_excel("./data/Locations.xlsx") %>% 
+  clean_names()
+
+names_eq <- c(
+  "date",
+  "governorate",
+  "district",
+  "sub_district",
+  "community",
+  "admin4",
+  "casualties",
+  "injuries",
+  "completely_destroyed_houses",
+  "damaged_unihabitable_houses",
+  "temporary_accommodation_centres",
+  "idps_in_all_centres",
+  "schools_as_accomodation_centres",
+  "idps_in_schools",
+  "tents_needed",
+  "blankets_mattresses_needed",
+  "temporary_accommodation_centres_available", 
+  "accessible_civil_defense",
+  "latrines_available",
+  "meals_needed_per_day",
+  "need_blood_donations",
+  "health_services_available",
+  "necessary_medical_equipment",
+  "rubble_volunteers",
+  "telecoms_available",
+  "electricity_available", 
+  "heating_fuel_needed"
+)
+
+eq <- read_excel("./data/syria-earthquake-impact-05-march-2023.xlsx",
+                 sheet = "DATASET") %>% 
+  setNames(names_eq) %>% 
+  left_join(locations %>% select(admin4pcode, admin3pcode), 
+            by = c("admin4" = "admin4pcode"))
+
+eq_score <- eq %>%
+      mutate(wounded_dead = casualties + injuries,
+             damaged_houses = completely_destroyed_houses + damaged_unihabitable_houses) %>% 
+      group_by(admin3pcode) %>% 
+      summarise(wounded_dead = sum(wounded_dead, na.rm = TRUE), 
+                damaged_houses = sum(damaged_houses, na.rm = TRUE)) %>% 
+  left_join(read_excel("./data/2023HNO_PiN_Severity_detailedAoI_FORSHARE 15032023.xlsx", skip = 1, 
+                  sheet = 1) %>%
+              clean_names() %>%
+              select(admin3pcode, total_population), 
+            by = "admin3pcode") %>% 
+  mutate(wounded_dead_100k = wounded_dead / total_population * 100000, 
+         damaged_houses_100k = damaged_houses / total_population * 100000) %>%
+  mutate_at(vars(wounded_dead, damaged_houses, 
+                 wounded_dead_100k, damaged_houses_100k), ~ range_wna(.)) %>% 
+  mdepriv(c("wounded_dead", "damaged_houses", 
+            "wounded_dead_100k", "damaged_houses_100k"), 
+          method = "cz", output = "all", 
+          score_i_heading = "eq_score")
+
+needs_cash <- read_excel("./data/2023HNO_PiN_Severity_detailedAoI_FORSHARE 15032023.xlsx", skip = 1, 
+                  sheet = 1) %>% 
+  filter(AoC == "NW") %>% 
+  select(1:7, total_population = `total population`) %>% 
+  mutate(unable_to_meet_basic_needs = total_population * .08) %>% 
+  rename_all(tolower) %>%
+  left_join(eq_score$data %>% 
+              select(admin3pcode, eq_score), 
+            by = "admin3pcode") %>% 
+  replace_na(list(eq_score = 0)) %>% 
+  mutate(complete_damage = 265000 * (eq_score / sum(eq_score, na.rm = TRUE)), 
+         major_damage = 224231 * eq_score / sum(eq_score, na.rm = TRUE)) %>% 
+  mutate(target_option1 = unable_to_meet_basic_needs + complete_damage + major_damage, 
+         target_option2 = unable_to_meet_basic_needs + complete_damage) 
+
+# needs_cash %>% write_xlsx("./data/proposed_targets_preliminary_allocation.xlsx")
+
+```
+
+This document proposes new targets for 2023 for the Cash Working Group; targets have not been updated since the flash appeal on 12 February 2023. New assessment data has been made available since then, necessitating the change. 
+
+The proposed calculation for the new Cash Working Group target is the sum of **persons completely unable to meet their basic needs** (identified as 8% of the population in the HNO) and the number of **persons in immediate needs of shelter and NFI support** (which the Shelter Cluster has [estimated](https://sheltercluster.s3.eu-central-1.amazonaws.com/public/docs/EQ-SitRep-14Mar-vEN.pdf?VersionId=q2PaLZGoorIMaaLJVPtd7ca6HDmp0lpO) at 265,000 persons whose houses have been completely damaged and 224,231 persons whose houses have received major damage. 
+
+Based on these figures, two options for new targets are being proposed: 
+
+```{r}
+needs_cash %>% 
+  summarise_at(vars("unable_to_meet_basic_needs", 
+                    "complete_damage", 
+                    "major_damage",  
+                    "target_option1", 
+                    "target_option2"), sum) %>% 
+  mutate(across(where(is.double)), round(.)) %>% 
+  pivot_longer(cols = everything(), 
+               names_to = "group", 
+               values_to = "persons") %>% 
+  flextable() %>% 
+  set_caption("Options for CWG revised target") %>% 
+  theme_zebra() %>% 
+  set_table_properties(width = .5, layout = "autofit") %>% 
+  footnote(i = 4, j = 1, ref_symbols = "a", 
+           as_paragraph("unable to meet needs + complete damage + major damage")) %>% 
+  footnote(i = 5, j = 1, ref_symbols = "b", 
+           as_paragraph("unable to meet needs + complete damage")) %>% 
+  italic(part = "footer")
+
+```
+
+<br>
+
+Target 1 is the combination of persons completely unable to meet their basic needs in addition to persons whose houses have been either majorly or completely damaged. Target 2 is the sum of persons unable to meet their basic needs and only the persons whose houses have been completely damaged. 
+
+<br>
+
+Furthermore, the Cash Working Group has also conducted a preliminary allocation of these new proposed targets at the sub-district (admin3) level. 
+
+This preliminary allocation has been based on the combination of four variables, taking into account both the magnitude and severity of the earthquake's impact:
+
+* The number of persons wounded and dead
+* The number of persons wounded and dead per 100,000 persons 
+* The number of completely and partially-damaged houses
+* The number of completely and partially-damaged houses per 100,000 persons 
+
+The [Betti-Verma formula](http://medim.ceps.lu/stata/mdepriv_v3.pdf) formula was applied to weight these variables. 
+
+
+
+
