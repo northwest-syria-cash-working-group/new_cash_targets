@@ -201,11 +201,13 @@ needs_cash <- read_excel("./data/2023HNO_PiN_Severity_detailedAoI_FORSHARE 15032
 
 ```
 
+<br><br><br>
+
 # Overall cash working group targets
 
 This document proposes new targets for 2023 for the Cash Working Group; targets have not been updated since the flash appeal on 12 February 2023. New assessment data has been made available since then, necessitating the change. 
 
-The proposed calculation for the new Cash Working Group target is the sum of **persons completely unable to meet their basic needs** (identified as 8% of the population in the HNO) and the number of **persons in immediate needs of shelter and NFI support** (which the Shelter Cluster has [estimated](https://sheltercluster.s3.eu-central-1.amazonaws.com/public/docs/EQ-SitRep-14Mar-vEN.pdf?VersionId=q2PaLZGoorIMaaLJVPtd7ca6HDmp0lpO) at 265,000 persons whose houses have been completely damaged and 224,231 persons whose houses have received major damage. 
+The proposed new targets Cash Working Group should take into account the sum of **persons completely unable to meet their basic needs** (identified as 8% of the population in the HNO) and the number of **persons in immediate needs of shelter and NFI support** (which the Shelter Cluster has [estimated](https://sheltercluster.s3.eu-central-1.amazonaws.com/public/docs/EQ-SitRep-14Mar-vEN.pdf?VersionId=q2PaLZGoorIMaaLJVPtd7ca6HDmp0lpO) at 265,000 persons whose houses have been completely damaged and 224,231 persons whose houses have received major damage. 
 
 Based on these figures, two options for new targets are being proposed: 
 
@@ -235,7 +237,10 @@ needs_cash %>%
 
 <br>
 
-Target 1 is the combination of persons completely unable to meet their basic needs in addition to persons whose houses have been either majorly or completely damaged. Target 2 is the sum of persons unable to meet their basic needs and only the persons whose houses have been completely damaged. 
+*Update*: **Target option 1, or 662,924 persons, has been selected**, based on partners' current capacity to meet needs. Additionally, the population whose houses have been completely or severely damaged should be prioritised above the populations whosehouses have received major damage. 
+
+Partner capacities and community-level needs will be reassessed regularly. Should the situation change or new data be made available, the targets will also be correspondingly be updated. 
+
 
 <br><br><br>
 
@@ -250,9 +255,11 @@ This preliminary allocation has been based on the combination of four variables,
 * The number of completely and partially-damaged houses
 * The number of completely and partially-damaged houses per 100,000 persons 
 
-The [Betti-Verma formula](http://medim.ceps.lu/stata/mdepriv_v3.pdf) formula was applied to weight these variables. 
+When explaining to partners and communities how sub-district level targets have been set, it can be easily explained that a score was developed based on the above four variables. 
 
-A **sub-district-level breakdown** of these new proposed targets may be downloaded **[here](https://github.com/northwest-syria-cash-working-group/new_cash_targets/raw/main/data/proposed_targets_preliminary_allocation.xlsx)**.
+For a more detailed explanation, please see this document on the [Betti-Verma formula](http://medim.ceps.lu/stata/mdepriv_v3.pdf) to understand the math behind how these variables were weighted. Though, in brief, the Betti-Vermi formula is an improved weighted average that penalises redundancy and rewards variation (i.e. extremes will tend to have higher scores).  
+
+A **sub-district-level breakdown** of these new proposed targets may be downloaded **[here](https://github.com/northwest-syria-cash-working-group/new_cash_targets/raw/main/data/proposed_targets_preliminary_allocation.xlsx)**. Bear in mind that we have selected **Option 1**. 
 
 <br><br>
 
@@ -272,7 +279,7 @@ The plots below show the magnitude and severity of the wounded and dead and dama
 
 The calculated earthquake score, which roughly translates to each sub-district's share of the overall earthquake impact is marked by the size of each point. 
 
-As a rule of thumb, sub-districts which show up in both of the blue rectangles should be prioritised, seeing as they are above the median in magnitude and severity for both casualties and damaged houses. 
+As a rule of thumb, sub-districts which show up in at least one of the blue boxes should be targetted, with clear priority going to sub-districts which show up in both (meaning that they are above average in magnitude and severity for both casualties and damaged houses). 
 
 <br>
 
