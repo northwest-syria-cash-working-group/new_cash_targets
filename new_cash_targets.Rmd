@@ -237,7 +237,7 @@ needs_cash %>%
 
 <br>
 
-*Update*: **Target option 1, or 662,924 persons, has been selected**, based on partners' current capacity to meet needs. Additionally, the population whose houses have been completely or severely damaged should be prioritised above the populations whosehouses have received major damage. 
+*Update*: **Target option 2, or 662,924 persons, has been selected**, based on partners' current capacity to meet needs. Additionally, the population whose houses have been completely or severely damaged should be prioritised above the populations whosehouses have received major damage. 
 
 Partner capacities and community-level needs will be reassessed regularly. Should the situation change or new data be made available, the targets will also be correspondingly be updated. 
 
@@ -257,9 +257,11 @@ This preliminary allocation has been based on the combination of four variables,
 
 When explaining to partners and communities how sub-district level targets have been set, it can be easily explained that a score was developed based on the above four variables. 
 
-For a more detailed explanation, please see this document on the [Betti-Verma formula](http://medim.ceps.lu/stata/mdepriv_v3.pdf) to understand the math behind how these variables were weighted. Though, in brief, the Betti-Vermi formula is an improved weighted average that penalises redundancy and rewards variation (i.e. extremes will tend to have higher scores).  
+For a more detailed explanation, please see this document on the [Betti-Verma formula](http://medim.ceps.lu/stata/mdepriv_v3.pdf) to understand the math behind how these variables were weighted. Though, in brief, the Betti-Vermi formula is a method for selecting a subset of predictor variables in a multiple regression model, while accounting for the presence of multicollinearity among the predictors. The criterion is based on the concept of "contribution", which is defined as the degree to which a predictor variable contributes to the prediction of the outcome variable, over and above the contributions of the other predictor variables in the model.
 
-A **sub-district-level breakdown** of these new proposed targets may be downloaded **[here](https://github.com/northwest-syria-cash-working-group/new_cash_targets/raw/main/data/proposed_targets_preliminary_allocation.xlsx)**. Bear in mind that we have selected **Option 1**. 
+The Betti-Verma method aims to select a subset of independent variables that have a low variance inflation factor (VIF), which indicates a low degree of multicollinearity. By selecting a subset of independent variables with a low VIF, the method can improve the accuracy and interpretability of the regression model, resulting in a model which penalises redundancy and rewards variation. 
+
+A **sub-district-level breakdown** of these new proposed targets may be downloaded **[here](https://github.com/northwest-syria-cash-working-group/new_cash_targets/raw/main/data/proposed_targets_preliminary_allocation.xlsx)**. Bear in mind that we have selected **Option 2**. 
 
 <br><br>
 
@@ -338,7 +340,9 @@ As a visual proof, the earthquake score (a calculated weighted average) is extre
 <br>
 
 
-```{r warning=FALSE}
+```{r warning=FALSE, fig.height = 6}
+
+# Maybe you should log these values 
 eq %>% 
   left_join(locations %>% distinct(admin3pcode, sub_district = admin3name_en), 
             by = "admin3pcode") %>% 
