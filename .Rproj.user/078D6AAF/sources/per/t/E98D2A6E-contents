@@ -207,7 +207,7 @@ needs_cash <- read_excel("./data/2023HNO_PiN_Severity_detailedAoI_FORSHARE 15032
 
 This document proposes new targets for 2023 for the Cash Working Group; targets have not been updated since the flash appeal on 12 February 2023. New assessment data has been made available since then, necessitating the change. 
 
-The proposed new targets Cash Working Group should take into account the sum of **persons completely unable to meet their basic needs** (identified as 8% of the population in the HNO) and the number of **persons in immediate needs of shelter and NFI support** (which the Shelter Cluster has [estimated](https://sheltercluster.s3.eu-central-1.amazonaws.com/public/docs/EQ-SitRep-14Mar-vEN.pdf?VersionId=q2PaLZGoorIMaaLJVPtd7ca6HDmp0lpO) at 265,000 persons whose houses have been completely damaged and 224,231 persons whose houses have received major damage. 
+The proposed new targets Cash Working Group should take into account the sum of **persons completely unable to meet their basic needs** (identified as 8% of the population in the HNO; this was the basis for the original target) and the number of **persons in immediate needs of shelter and NFI support** (which the Shelter Cluster has [estimated](https://sheltercluster.s3.eu-central-1.amazonaws.com/public/docs/EQ-SitRep-14Mar-vEN.pdf?VersionId=q2PaLZGoorIMaaLJVPtd7ca6HDmp0lpO) at 265,000 persons whose houses have been completely damaged and 224,231 persons whose houses have received major damage. 
 
 Based on these figures, two options for new targets are being proposed: 
 
@@ -237,7 +237,7 @@ needs_cash %>%
 
 <br>
 
-*Update*: **Target option 2, or 662,924 persons, has been selected**, based on partners' current capacity to meet needs. Additionally, the population whose houses have been completely or severely damaged should be prioritised above the populations whosehouses have received major damage. 
+*Update*: **Target option 2, or 662,924 persons, has been selected**, based on partners' current capacity to meet needs. Additionally, the population whose houses have been completely or severely damaged should be prioritised above the populations whose houses have received major damage. 
 
 Partner capacities and community-level needs will be reassessed regularly. Should the situation change or new data be made available, the targets will also be correspondingly be updated. 
 
